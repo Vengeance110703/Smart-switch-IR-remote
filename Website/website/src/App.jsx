@@ -1,34 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import * as React from "react"
+import Switch from "@mui/material/Switch"
+import { socket } from "./socket"
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [checked, setChecked] = React.useState([])
+
+  React.useEffect(() => {
+    socket.emit("init")
+    socket.on("initResponse", results => {
+      setChecked(results)
+    })
+  }, [])
+
+  React.useEffect(() => {
+    socket.on("stateMCU", ([id, state]) => {
+      // console.log(`${id} ${state}`)
+      setChecked(prev => {
+        prev.forEach(element => {
+          if (element.id == id) {
+            element.state = state
+          }
+        })
+        return [...prev]
+      })
+    })
+  }, [socket])
+
+  const handleChange = event => {
+    const { id, checked: newValue } = event.target
+
+    setChecked(prev => {
+      prev.forEach(element => {
+        if (element.id == id) {
+          element.state = newValue
+        }
+      })
+      // console.log(prev)
+      return [...prev]
+    })
+
+    socket.emit("stateWeb", checked)
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div>
+      {checked.map(({ id, state }) => {
+        return (
+          <Switch
+            key={id}
+            id={String(id)}
+            onChange={handleChange}
+            checked={state}
+          />
+        )
+      })}
+    </div>
   )
 }
 

@@ -5,19 +5,15 @@
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 
-#define LED 2
-#define switch1 25
-#define switch2 26
-
 Preferences pref;
 
-const char *ssid = "aaryan1_2.4G";
-const char *password = "info2023";
+const char *ssid = "Sheth 2.4 Ghz";
+const char *password = "all161803";
 
-String serverName = "http://192.168.1.17:3000";
+String serverName = "http://192.168.29.8:3000";
 
 int relay[] = {18, 19};
-int manual[] = {13, 14};
+int manual[] = {22, 23};
 
 String httpGETRequest(String serverName)
 {
@@ -88,6 +84,7 @@ boolean checkState(int id)
   if (err)
   {
     Serial.println(err.c_str());
+    Serial.println("error");
   }
   return doc["state"];
 }
@@ -128,9 +125,11 @@ void setup()
   Serial.println(WiFi.localIP());
 
   // Get Default State
-  String dState = httpGETRequest(serverName + "/state");
+  String dState = "[" + httpGETRequest(serverName + "/state") + "]";
+  Serial.println(dState);
   JsonDocument doc;
   DeserializationError err = deserializeJson(doc, dState);
+
   if (err)
   {
     Serial.println(err.c_str());
@@ -143,6 +142,7 @@ void setup()
     digitalWrite(manual[i], HIGH);
     pinMode(relay[i], OUTPUT);
     digitalWrite(relay[i], !(boolean)doc[i]["state"]);
+    Serial.println((boolean)doc[i]["state"]);
   }
 }
 
@@ -156,7 +156,7 @@ void loop()
   delay(250);
   for (int i = 0; i < 2; i++)
   {
-    boolean manualState = digitalRead(manual[i]);
+    boolean manualState = !(digitalRead(manual[i]));
     changeState(manualState, i + 1, "manual");
   }
   delay(250);
